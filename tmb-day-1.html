@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+  <html lang="en">
+  <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TMB Day 1 | Tour du Mont Blanc</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #1a1712; color: #e5ddd0; }
+.wrap { max-width: 900px; margin: 0 auto; padding: 4rem 2rem 3rem; }
+.tag { display: inline-block; padding: 0.4rem 1.2rem; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 100px; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: #a8c070; margin-bottom: 1.5rem; }
+h1 { font-family: 'Playfair Display', serif; font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 800; color: #fff; margin-bottom: 0.75rem; }
+.subtitle { font-size: 1.05rem; color: rgba(255,255,255,0.55); max-width: 600px; margin-bottom: 2.5rem; line-height: 1.6; }
+.stats { display: flex; gap: 2.5rem; flex-wrap: wrap; margin-bottom: 2.5rem; }
+.stat-value { font-size: 1.8rem; font-weight: 700; color: #fff; }
+.stat-label { font-size: 0.75rem; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 0.25rem; }
+.note { font-size: 0.8rem; color: rgba(255,255,255,0.35); margin-top: -1.5rem; margin-bottom: 2.5rem; }
+#map { height: 420px; border-radius: 12px; margin-bottom: 2rem; }
+.back { color: #a8c070; text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+.back:hover { text-decoration: underline; }
+</style>
+  </head>
+  <body>
+<div class="wrap">
+  <a class="back" href="/">&larr; Back to Tour du Mont Blanc</a>
+<div class="tag" style="margin-top:1.5rem;">JULY 5, 2026 &middot; DAY 1</div>
+  <h1>TMB Day 1</h1>
+  <p class="subtitle">GPS-tracked route from Day 1 of the Tour du Mont Blanc, near Saint-Gervais-les-Bains.</p>
+  <div class="stats">
+  <div><div class="stat-value">8.45 mi</div><div class="stat-label">Distance</div></div>
+  <div><div class="stat-value">2,021 ft</div><div class="stat-label">Elevation Gain</div></div>
+  <div><div class="stat-value">~4,237 ft</div><div class="stat-label">Elevation Loss</div></div>
+  </div>
+  <p class="note">Elevation loss is an estimate derived from GPS altitude data; Strava does not report an official loss figure.</p>
+<div id="map"></div>
+</div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+  const route = [[45.8731,6.7784],[45.8717,6.7799],[45.8692,6.7838],[45.868,6.7848],[45.8649,6.7875],[45.8638,6.7861],[45.8636,6.7836],[45.8627,6.783],[45.8617,6.783],[45.8614,6.7819],[45.8605,6.7809],[45.8597,6.7803],[45.8584,6.7788],[45.8575,6.7775],[45.8571,6.777],[45.856,6.7753],[45.8549,6.7739],[45.853,6.7727],[45.8518,6.7717],[45.8509,6.7704],[45.8502,6.7703],[45.8494,6.7693],[45.8486,6.7688],[45.8476,6.7684],[45.847,6.7669],[45.8464,6.7669],[45.8452,6.7658],[45.844,6.7646],[45.8427,6.7637],[45.8411,6.7615],[45.8391,6.7601],[45.8391,6.7602],[45.8395,6.7574],[45.8427,6.7522],[45.842,6.7485],[45.8397,6.7432],[45.8392,6.742],[45.8373,6.7404],[45.8389,6.7389],[45.8417,6.7377],[45.8431,6.7367],[45.8416,6.7347],[45.8394,6.7307],[45.8367,6.7287],[45.8321,6.7252],[45.8294,6.724],[45.8279,6.723]];
+const map = L.map('map', { zoomControl: true, scrollWheelZoom: false });
+L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
+  attribution: 'Leaflet | &copy; OSM France',
+  maxZoom: 18
+}).addTo(map);
+const line = L.polyline(route, { color: '#a8c070', weight: 4 }).addTo(map);
+map.fitBounds(line.getBounds(), { padding: [30, 30] });
+L.circleMarker(route[0], { radius: 6, color: '#a8c070', fillColor: '#a8c070', fillOpacity: 1 }).addTo(map).bindTooltip('Start');
+L.circleMarker(route[route.length-1], { radius: 6, color: '#e5ddd0', fillColor: '#e5ddd0', fillOpacity: 1 }).addTo(map).bindTooltip('End');
+</script>
+</body>
+</html>
