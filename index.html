@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tour du Mont Blanc - July 2026</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #1a1712;
+            color: #e5ddd0;
+            overflow-x: hidden;
+        }
+
+        .hero {
+            position: relative;
+            height: 100vh;
+            min-height: 600px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background: linear-gradient(135deg, #2a2318 0%, #3d3528 30%, #4a4030 60%, #5a4f3a 100%);
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background:
+                radial-gradient(ellipse at 20% 50%, rgba(120, 140, 80, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(200, 180, 140, 0.08) 0%, transparent 40%);
+        }
+
+        .mountain-silhouette {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40%;
+            background: linear-gradient(to top, #1a1712 0%, transparent 100%);
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            padding: 0 2rem;
+        }
+
+        .hero-tag {
+            display: inline-block;
+            padding: 0.4rem 1.2rem;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 100px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: #a8c070;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2.5rem, 6vw, 5rem);
+            font-weight: 800;
+            line-height: 1.1;
+            color: #fff;
+            margin-bottom: 1rem;
+        }
+
+        .hero h1 span {
+            background: linear-gradient(135deg, #c8d8a0, #a8c070);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-subtitle {
+            font-size: 1.15rem;
+            color: rgba(255, 255, 255, 0.55);
+            max-width: 500px;
+            margin: 0 auto 2rem;
+            line-height: 1.6;
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: 2.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .hero-stat { text-align: center; }
+
+        .hero-stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .hero-stat-label {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.35);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-top: 0.25rem;
+        }
+
+        .scroll-indicator {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2;
+            animation: bounce 2s infinite;
+        }
+
+        .scroll-indicator svg {
+            width: 24px;
+            height: 24px;
+            stroke: rgba(255, 255, 255, 0.25);
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(8px); }
+        }
+
+        .main-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        .section-header { margin-bottom: 3rem; }
+
+        .section-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: #a8c070;
+            margin-bottom: 0.75rem;
+        }
+
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        /* Map Section */
+        .map-section { margin-bottom: 5rem; }
+
+        #map {
+            width: 100%;
+            height: 85vh;
+            border-radius: 16px;
+            border: 2px solid rgba(168, 192, 112, 0.2);
+            z-index: 1;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .leaflet-container { background: #c8c0a8; }
+
+        /* Green day markers matching the reference photo */
+        .day-marker {
+            background: none;
+            border: none;
+        }
+
+        .day-marker-inner {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: #6b9b37;
+            border: 3px solid #4a7a20;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            font-size: 14px;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.35), 0 0 0 2px rgba(255,255,255,0.3);
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .day-marker-inner:hover {
+            transform: scale(1.15);
+        }
+
+        .day-marker-inner.active {
+            background: #4a7a20;
+            transform: scale(1.25);
+            box-shadow: 0 0 20px rgba(107, 155, 55, 0.6), 0 0 0 3px rgba(255,255,255,0.5);
+        }
+
+        /* Place name labels on map */
+        .place-label {
+            background: none !important;
+            border: none !important;
+            box-shadow: none !important;
+            white-space: nowrap;
+        }
+
+        .place-label-text {
+            font-family: 'Inter', sans-serif;
+            font-size: 11px;
+            font-weight: 600;
+            color: #2a2a2a;
+            text-shadow:
+                0 0 4px rgba(255,255,255,0.9), 0 0 8px rgba(255,255,255,0.7),
+                1px 1px 2px rgba(255,255,255,0.8), -1px -1px 2px rgba(255,255,255,0.8);
+            white-space: nowrap;
+        }
+
+        .place-label-text.landmark {
+            font-size: 10px;
+            font-weight: 500;
+            font-style: italic;
+            color: #444;
+        }
+
+        .place-label-text.country {
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 0.35em;
+            text-transform: uppercase;
+            color: rgba(50, 50, 50, 0.35);
+            text-shadow:
+                0 0 6px rgba(255,255,255,0.6), 0 0 12px rgba(255,255,255,0.4);
+        }
+
+        /* Warm popup style */
+        .custom-popup .leaflet-popup-content-wrapper {
+            background: #2a2318;
+            color: #e5ddd0;
+            border-radius: 12px;
+            border: 1px solid rgba(168, 192, 112, 0.3);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        }
+
+        .custom-popup .leaflet-popup-tip {
+            background: #2a2318;
+        }
+
+        .custom-popup .leaflet-popup-close-button {
+            color: rgba(255,255,255,0.4);
+        }
+
+        .popup-content {
+            padding: 0.25rem;
+            min-width: 220px;
+        }
+
+        .popup-day {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #a8c070;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .popup-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #fff;
+            margin: 0.25rem 0;
+        }
+
+        .popup-detail {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.5);
+        }
+
+        .popup-type {
+            display: inline-block;
+            margin-top: 0.4rem;
+            padding: 0.15rem 0.5rem;
+            border-radius: 100px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .popup-type.hike {
+            background: rgba(107, 155, 55, 0.2);
+            color: #a8c070;
+        }
+
+        .popup-type.transfer {
+            background: rgba(200, 170, 100, 0.2);
+            color: #c8aa64;
+        }
+
+        .popup-type.rest {
+            background: rgba(140, 160, 200, 0.2);
+            color: #8ca0c8;
+        }
+
+        /* Itinerary Cards */
+        .itinerary-grid {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .day-card {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 1.5rem;
+            align-items: center;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .day-card:hover {
+            background: rgba(168, 192, 112, 0.05);
+            border-color: rgba(168, 192, 112, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .day-card.active {
+            background: rgba(168, 192, 112, 0.08);
+            border-color: rgba(168, 192, 112, 0.3);
+        }
+
+        .day-number {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: rgba(107, 155, 55, 0.15);
+            border: 2px solid rgba(107, 155, 55, 0.4);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .day-num {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #a8c070;
+            line-height: 1;
+        }
+
+        .day-label {
+            font-size: 0.55rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: rgba(168, 192, 112, 0.6);
+            margin-top: 2px;
+        }
+
+        .day-info h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 0.35rem;
+        }
+
+        .day-date {
+            font-size: 0.8rem;
+            color: #a8c070;
+            margin-bottom: 0.35rem;
+        }
+
+        .day-description {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.5);
+            line-height: 1.5;
+        }
+
+        .day-meta {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.5rem;
+        }
+
+        .meta-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.3rem 0.75rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 100px;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.5);
+            white-space: nowrap;
+        }
+
+        .meta-badge svg {
+            width: 14px;
+            height: 14px;
+            flex-shrink: 0;
+        }
+
+        .meta-badge.type-hike { color: #a8c070; background: rgba(107, 155, 55, 0.12); }
+        .meta-badge.type-transfer { color: #c8aa64; background: rgba(200, 170, 100, 0.12); }
+        .meta-badge.type-rest { color: #8ca0c8; background: rgba(140, 160, 200, 0.12); }
+
+        /* Countries section */
+        .countries {
+            display: flex;
+            gap: 1rem;
+            margin-top: 5rem;
+            flex-wrap: wrap;
+        }
+
+        .country-card {
+            flex: 1;
+            min-width: 200px;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
+            text-align: center;
+        }
+
+        .country-flag {
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .country-name {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .country-days {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.4);
+            margin-top: 0.25rem;
+        }
+
+        /* Map style switcher */
+        .map-style-switcher {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            z-index: 1000;
+            display: flex;
+            gap: 0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .map-style-btn {
+            padding: 6px 12px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            border: none;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.92);
+            color: #555;
+            transition: all 0.2s;
+            backdrop-filter: blur(4px);
+        }
+
+        .map-style-btn:hover {
+            background: rgba(255, 255, 255, 1);
+            color: #222;
+        }
+
+        .map-style-btn.active {
+            background: #d9534f;
+            color: #fff;
+        }
+
+        .map-style-btn:first-child { border-radius: 8px 0 0 8px; }
+        .map-style-btn:last-child { border-radius: 0 8px 8px 0; }
+
+        /* Map legend */
+        .map-legend {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            z-index: 1000;
+            min-width: 140px;
+        }
+
+        .map-legend h4 {
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.3rem;
+            font-size: 0.7rem;
+            color: #555;
+        }
+
+        .legend-line {
+            width: 20px;
+            height: 3px;
+            border-radius: 2px;
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        footer {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: rgba(255, 255, 255, 0.15);
+            font-size: 0.8rem;
+        }
+
+        @media (max-width: 768px) {
+            .day-card {
+                grid-template-columns: auto 1fr;
+                gap: 1rem;
+            }
+            .day-meta {
+                grid-column: 1 / -1;
+                flex-direction: row;
+                align-items: center;
+            }
+            #map { height: 60vh; }
+            .hero-stats { gap: 1.5rem; }
+            .map-legend { bottom: 10px; right: 10px; padding: 0.75rem 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <section class="hero">
+        <div class="mountain-silhouette"></div>
+        <div class="hero-content">
+            <div class="hero-tag">July 5 - 11, 2026</div>
+            <h1>Tour du <span>Mont Blanc</span></h1>
+            <p class="hero-subtitle">A 7-day guided trek through France, Italy, and Switzerland around Western Europe's highest peak.</p>
+            <div class="hero-stats">
+                <div class="hero-stat">
+                    <div class="hero-stat-value">7</div>
+                    <div class="hero-stat-label">Days</div>
+                </div>
+                <div class="hero-stat">
+                    <div class="hero-stat-value">3</div>
+                    <div class="hero-stat-label">Countries</div>
+                </div>
+                <div class="hero-stat">
+                    <div class="hero-stat-value">~170 km</div>
+                    <div class="hero-stat-label">Distance</div>
+                </div>
+                <div class="hero-stat">
+                    <div class="hero-stat-value">15,774 ft</div>
+                    <div class="hero-stat-label">Mont Blanc</div>
+                </div>
+            </div>
+        </div>
+        <div class="scroll-indicator">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+        </div>
+    </section>
+
+    <div class="main-content">
+        <section class="map-section">
+            <div class="section-header">
+                <div class="section-label">Route Overview</div>
+                <div class="section-title">Your Path Around Mont Blanc</div>
+            </div>
+            <div style="position: relative;">
+                <div id="map"></div>
+                <div class="map-style-switcher">
+                    <button class="map-style-btn active" data-style="outdoor">Outdoor</button>
+                    <button class="map-style-btn" data-style="terrain">Terrain</button>
+                    <button class="map-style-btn" data-style="topo">Topographic</button>
+                    <button class="map-style-btn" data-style="satellite">Satellite</button>
+                </div>
+                <div class="map-legend">
+                    <h4>Route Legend</h4>
+                    <div class="legend-item">
+                        <div class="legend-line" style="background: #d9534f;"></div>
+                        TMB Route
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-line" style="background: #f0ad4e; border-top: 2px dashed #f0ad4e; height: 0;"></div>
+                        Transfer
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #6b9b37; border: 2px solid #4a7a20;"></div>
+                        Day stop
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <div class="section-header">
+                <div class="section-label">Day by Day</div>
+                <div class="section-title">The Itinerary</div>
+            </div>
+            <div class="itinerary-grid" id="itinerary"></div>
+        </section>
+
+        <div class="countries">
+            <div class="country-card">
+                <div class="country-flag">&#x1F1EB;&#x1F1F7;</div>
+                <div class="country-name">France</div>
+                <div class="country-days">Days 1 - 3, 7</div>
+            </div>
+            <div class="country-card">
+                <div class="country-flag">&#x1F1EE;&#x1F1F9;</div>
+                <div class="country-name">Italy</div>
+                <div class="country-days">Days 3 - 5</div>
+            </div>
+            <div class="country-card">
+                <div class="country-flag">&#x1F1E8;&#x1F1ED;</div>
+                <div class="country-name">Switzerland</div>
+                <div class="country-days">Days 5 - 7</div>
+            </div>
+        </div>
+    </div>
+
+    <footer>Tour du Mont Blanc &middot; July 2026</footer>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const days = [
+            {
+                day: 1, date: "July 5, 2026",
+                title: "Ascend to the Col de Tricot",
+                desc: "Starting at the Prarion cable car in Les Houches, ride up to Bellevue before following a high-altitude trail across grassy ridges. The path leads to the Col de Tricot with sweeping views of Mont Blanc, then descends through the tranquil Alpage du Truc toward Les Contamines. A picnic lunch among alpine blooms recharges you for the journey.",
+                lat: 45.8580, lng: 6.7740,
+                type: "hike", typeLabel: "Hike",
+                elevation: "+2,133 ft / -4,265 ft", distance: "12â14 km", duration: "5.5 hrs",
+                meals: "Dinner", overnight: "Les Contamines"
+            },
+            {
+                day: 2, date: "July 6, 2026",
+                title: "Crossing the Col du Bonhomme",
+                desc: "From Les Contamines through ancient Roman road sections toward the Col du Bonhomme, rising above glacial valleys. Continue to the Col de la Croix du Bonhomme, soaking in 360-degree panoramas of rugged peaks, before descending into the Chapieux valley. By evening, transfer to your hotel in Roselend.",
+                lat: 45.7420, lng: 6.7030,
+                type: "hike", typeLabel: "Hike",
+                elevation: "+4,265 ft / -2,297 ft", distance: "14 km", duration: "7 hrs",
+                meals: "Breakfast, Lunch & Dinner", overnight: "Roselend"
+            },
+            {
+                day: 3, date: "July 7, 2026",
+                title: "Into Italy via the Col de la Seigne",
+                desc: "From Roselend, set out toward the Mont Blanc curtain, ascending to the Col de la Seigne that marks the FrenchâItalian border. The trail traverses rocky terrain and alpine pastures before descending into Val Veny. Enjoy views of glacier-carved valleys as you approach Courmayeur with a short transfer to your hotel.",
+                lat: 45.7500, lng: 6.8350,
+                type: "hike", typeLabel: "Hike",
+                elevation: "+2,428 ft / -3,478 ft", distance: "16 km", duration: "6 hrs",
+                meals: "Breakfast, Lunch & Dinner", overnight: "Courmayeur"
+            },
+            {
+                day: 4, date: "July 8, 2026",
+                title: "Courmayeur to Bonatti Trek in the Mont Blanc Massif",
+                desc: "Ascend from Courmayeur towards Rifugio Bertone with stunning views of the Mont Blanc mountain range. Continue with a scenic traverse to the Bonatti mountain hut. The day is rounded off with a beautiful descent towards Arnouva, then return to your hotel in Courmayeur by taxi transfer.",
+                lat: 45.8470, lng: 7.0220,
+                type: "hike", typeLabel: "Hike",
+                elevation: "+3,576 ft / -1,968 ft", distance: "14 km", duration: "6 hrs",
+                meals: "Breakfast, Lunch & Dinner", overnight: "Courmayeur"
+            },
+            {
+                day: 5, date: "July 9, 2026",
+                title: "Courmayeur to La Fouly Trek via Grand Col Ferret",
+                desc: "Enter Switzerland! After a climb offering stunning views of Mont Dolent, cross the Grand Col Ferret mountain pass. The day concludes with a gentle descent into the beautiful mountain pastures of La Peule and the charming village of La Fouly, nestled in the picturesque Valais region.",
+                lat: 45.8830, lng: 7.0720,
+                type: "hike", typeLabel: "Hike",
+                elevation: "+2,789 ft / -3,281 ft", distance: "14 km", duration: "6.5 hrs",
+                meals: "Breakfast, Lunch & Dinner", overnight: "La Fouly"
+            },
+            {
+                day: 6, date: "July 10, 2026",
+                title: "La Fouly to Champex and Trient Trek via FenÃªtre d'Arpette",
+                desc: "After a short transfer through Val Ferret to Champex, begin a scenic high-level traverse above Martigny and the Rhone Valley with glimpses of the canton's renowned vineyards. Depending on conditions, option to take the FenÃªtre d'Arpette route offering stunning alpine views. Your guide decides the best route.",
+                lat: 46.0560, lng: 6.9880,
+                type: "hike", typeLabel: "Hike",
+                elevation: "+2,559â3,773 ft / -3,281â4,593 ft", distance: "15 km", duration: "5.5â7 hrs",
+                meals: "Breakfast, Lunch & Dinner", overnight: "Trient"
+            },
+            {
+                day: 7, date: "July 11, 2026",
+                title: "Trient to Le Tour Trek with Chamonix Valley Views",
+                desc: "Your final day on the TMB â make your way back to France. As you descend, enjoy stunning views over the Chamonix Valley, one last breathtaking moment before reaching the village of Le Tour. Take the train back to the Prarion car park, with the trip concluding around 4:30 PM.",
+                lat: 46.0240, lng: 6.9660,
+                type: "hike", typeLabel: "Hike",
+                elevation: "+3,281 ft / -2,789 ft", distance: "12 km", duration: "5 hrs",
+                meals: "Breakfast", overnight: "End in Le Tour"
+            }
+        ];
+
+        // Official TMB route from OpenStreetMap (relation 124456) â 300 real GPS waypoints
+        const tmbFullRoute = [
+[45.96199,6.88624],[45.95857,6.88266],[45.95708,6.8741],[45.95141,6.87046],[45.94809,6.86663],[45.94591,6.85599],[45.94403,6.85275],[45.94003,6.84917],[45.94032,6.84761],[45.9412,6.84533],[45.94126,6.84277],[45.93997,6.83896],[45.93791,6.83728],[45.93404,6.83689],[45.9319,6.83497],[45.92826,6.8339],[45.92538,6.83199],[45.92386,6.82912],[45.92218,6.82901],[45.92144,6.82805],[45.92017,6.82692],[45.91701,6.82744],[45.91241,6.82158],[45.90695,6.81139],[45.90496,6.80955],[45.90437,6.80513],[45.90336,6.80252],[45.90192,6.80261],[45.90068,6.80459],[45.89817,6.80287],[45.89412,6.79816],[45.89173,6.79906],[45.88932,6.79324],[45.89191,6.78602],[45.89219,6.78413],[45.89249,6.77973],[45.88887,6.77994],[45.88847,6.77788],[45.88797,6.7747],[45.88597,6.77245],[45.88687,6.76919],[45.88535,6.76442],[45.88292,6.76092],[45.87691,6.76112],[45.87417,6.76181],[45.87146,6.76181],[45.86787,6.76024],[45.86531,6.75648],[45.86371,6.75699],[45.86202,6.75935],[45.86154,6.75181],[45.86136,6.74573],[45.85925,6.73723],[45.85719,6.73565],[45.85271,6.73429],[45.84691,6.73752],[45.84563,6.73657],[45.84586,6.73417],[45.8433,6.72811],[45.84184,6.72575],[45.83873,6.72455],[45.83204,6.72636],[45.826,6.72589],[45.81654,6.72706],[45.81098,6.72713],[45.80214,6.72455],[45.797,6.72073],[45.79298,6.71782],[45.78495,6.71261],[45.77601,6.71508],[45.76433,6.71235],[45.75801,6.71097],[45.75591,6.70834],[45.75394,6.70843],[45.75249,6.70931],[45.75156,6.70967],[45.74965,6.71217],[45.7477,6.715],[45.74676,6.71677],[45.74611,6.71751],[45.74508,6.71669],[45.73829,6.70995],[45.73435,6.7076],[45.72964,6.70984],[45.72613,6.7126],[45.72538,6.71458],[45.72426,6.71698],[45.72214,6.71873],[45.72094,6.72041],[45.72004,6.72212],[45.71881,6.7248],[45.71757,6.72591],[45.71573,6.72574],[45.71459,6.72512],[45.71349,6.72469],[45.71239,6.72489],[45.71125,6.72609],[45.70918,6.72814],[45.70739,6.72903],[45.70637,6.72953],[45.70533,6.72923],[45.70363,6.73024],[45.70175,6.72975],[45.69934,6.72766],[45.69883,6.72918],[45.6974,6.73059],[45.69686,6.73313],[45.69962,6.73813],[45.70237,6.74416],[45.70745,6.75073],[45.71492,6.75591],[45.72499,6.76464],[45.72838,6.76973],[45.73263,6.77581],[45.73507,6.77842],[45.73707,6.77916],[45.73647,6.77942],[45.73601,6.78029],[45.73521,6.78146],[45.735,6.78254],[45.73652,6.78472],[45.73897,6.78669],[45.74022,6.78921],[45.74198,6.79196],[45.74356,6.79297],[45.74574,6.79148],[45.74736,6.79612],[45.74962,6.80229],[45.75123,6.80758],[45.75189,6.81391],[45.75364,6.81846],[45.75565,6.82452],[45.75969,6.83175],[45.76532,6.83831],[45.76748,6.84084],[45.76838,6.84817],[45.77425,6.86726],[45.77472,6.8757],[45.77322,6.87853],[45.77161,6.88108],[45.76885,6.88343],[45.76848,6.88686],[45.77171,6.88946],[45.77102,6.89249],[45.7717,6.90044],[45.77832,6.90658],[45.78087,6.91263],[45.78398,6.9183],[45.78884,6.92721],[45.79128,6.93386],[45.7938,6.93816],[45.79271,6.93797],[45.79178,6.94039],[45.79116,6.94291],[45.78949,6.94548],[45.79075,6.95523],[45.79099,6.95788],[45.78881,6.96132],[45.79057,6.96544],[45.7914,6.96934],[45.79077,6.97164],[45.7938,6.97375],[45.79976,6.97908],[45.80179,6.98406],[45.80374,6.98627],[45.80511,6.98394],[45.80672,6.9835],[45.807,6.98057],[45.80733,6.9782],[45.80967,6.97958],[45.81626,6.97849],[45.82583,6.99508],[45.83317,7.00776],[45.83552,7.01892],[45.84234,7.02403],[45.84821,7.03162],[45.84693,7.03299],[45.84628,7.03649],[45.85131,7.03794],[45.8591,7.04629],[45.86691,7.05728],[45.86996,7.0545],[45.87248,7.05496],[45.87489,7.0579],[45.87702,7.06034],[45.87971,7.06292],[45.88251,7.06494],[45.88538,7.06654],[45.88405,7.06963],[45.88292,7.07336],[45.88332,7.07524],[45.88544,7.0751],[45.88841,7.0778],[45.89229,7.0942],[45.89715,7.11217],[45.8985,7.11516],[45.90014,7.11683],[45.9038,7.11536],[45.90769,7.11354],[45.9144,7.10547],[45.91932,7.1005],[45.92408,7.09527],[45.92925,7.09555],[45.93631,7.09611],[45.94089,7.09596],[45.94552,7.09818],[45.95036,7.10168],[45.95638,7.10516],[45.96206,7.10862],[45.96826,7.10924],[45.97167,7.11144],[45.97841,7.11312],[45.98096,7.12383],[45.98721,7.12184],[45.98922,7.12645],[45.99708,7.12827],[46.00083,7.1279],[46.00577,7.12402],[46.00943,7.12286],[46.01237,7.11965],[46.01693,7.11905],[46.01839,7.1183],[46.02036,7.11902],[46.0231,7.12027],[46.0255,7.12247],[46.0284,7.1183],[46.03195,7.10839],[46.03158,7.10445],[46.03582,7.0972],[46.04007,7.09569],[46.04352,7.09309],[46.04733,7.08728],[46.04932,7.08178],[46.0521,7.07234],[46.04728,7.0656],[46.04411,7.06073],[46.04453,7.05713],[46.04856,7.05757],[46.04941,7.05604],[46.05587,7.05317],[46.05535,7.04792],[46.05646,7.04571],[46.05754,7.04291],[46.05707,7.0355],[46.05654,7.03123],[46.05758,7.02535],[46.05731,7.01838],[46.05777,7.00864],[46.05773,7.00135],[46.05268,6.99963],[46.05312,6.99738],[46.05655,6.99465],[46.05037,6.99376],[46.04077,6.99318],[46.03896,6.99262],[46.03788,6.99088],[46.03655,6.98996],[46.03429,6.98767],[46.02976,6.97634],[46.02717,6.97229],[46.02738,6.97083],[46.02891,6.96313],[46.02871,6.95799],[46.02597,6.95528],[46.02438,6.95314],[46.02355,6.94905],[46.02361,6.94684],[46.02274,6.94519],[46.02023,6.94306],[46.01869,6.94166],[46.01737,6.9396],[46.01516,6.93842],[46.01247,6.93646],[46.00951,6.9342],[46.00686,6.93129],[46.00558,6.93283],[46.00401,6.93238],[46.00093,6.93077],[45.99977,6.92904],[45.99848,6.92602],[45.99676,6.92647],[45.99283,6.92251],[45.99049,6.92075],[45.98865,6.91927],[45.98803,6.9172],[45.98764,6.91572],[45.98584,6.91346],[45.98519,6.91248],[45.98356,6.91035],[45.98276,6.90896],[45.98234,6.90839],[45.98244,6.90738],[45.98212,6.90628],[45.98163,6.90545],[45.98118,6.90468],[45.98026,6.90394],[45.97877,6.90289],[45.97343,6.89775],[45.96901,6.89302],[45.96543,6.8894],[45.9636,6.88735],[45.96199,6.88624]
+        ];
+
+        // Transfer segments (not part of the official trail)
+        const transferSegments = [
+            // Day 2b: Les Chapieux area -> Roselend hotel
+            { coords: [[45.69686,6.73313],[45.6920,6.6340]], style: 'transfer' },
+            // Day 3 start: Roselend -> rejoin trail near Ville des Glaciers
+            { coords: [[45.6920,6.6340],[45.69962,6.73813]], style: 'transfer' },
+            // Day 4b: Arnouva -> Courmayeur (taxi back)
+            { coords: [[45.87702,7.06034],[45.7960,6.9680]], style: 'transfer' },
+            // Day 5a: Courmayeur -> Val Ferret start (transfer to trailhead)
+            { coords: [[45.7960,6.9680],[45.80967,6.97958]], style: 'transfer' },
+            // Day 6a: La Fouly -> Champex-Lac (transfer)
+            { coords: [[45.93631,7.09611],[46.0255,7.12247]], style: 'transfer' },
+        ];
+
+        // Place name labels to show on the map
+        const placeLabels = [
+            { lat: 45.9237, lng: 6.8694, name: "Chamonix", type: "town" },
+            { lat: 45.8905, lng: 6.7981, name: "Les Houches", type: "town" },
+            { lat: 45.8650, lng: 6.7900, name: "Bellevue", type: "landmark" },
+            { lat: 45.8580, lng: 6.7740, name: "Col de Tricot", type: "landmark" },
+            { lat: 45.8210, lng: 6.7265, name: "Les Contamines", type: "town" },
+            { lat: 45.7830, lng: 6.7200, name: "Notre Dame de la Gorge", type: "landmark" },
+            { lat: 45.7420, lng: 6.7030, name: "Col du Bonhomme", type: "landmark" },
+            { lat: 45.7090, lng: 6.7320, name: "Les Chapieux", type: "town" },
+            { lat: 45.6920, lng: 6.6340, name: "Roselend", type: "town" },
+            { lat: 45.7500, lng: 6.8350, name: "Col de la Seigne", type: "landmark" },
+            { lat: 45.8326, lng: 6.8652, name: "Mont Blanc", type: "peak" },
+            { lat: 45.7750, lng: 6.8900, name: "Val Veny", type: "landmark" },
+            { lat: 45.7960, lng: 6.9680, name: "Courmayeur", type: "town" },
+            { lat: 45.8100, lng: 6.9840, name: "Rif. Bertone", type: "landmark" },
+            { lat: 45.8470, lng: 7.0220, name: "Rif. Bonatti", type: "landmark" },
+            { lat: 45.8600, lng: 7.0480, name: "Val Ferret", type: "landmark" },
+            { lat: 45.8830, lng: 7.0720, name: "Grand Col Ferret", type: "landmark" },
+            { lat: 45.9370, lng: 7.0920, name: "La Fouly", type: "town" },
+            { lat: 46.0290, lng: 7.1175, name: "Champex-Lac", type: "town" },
+            { lat: 46.0560, lng: 6.9880, name: "Trient", type: "town" },
+            { lat: 46.0240, lng: 6.9660, name: "Col de Balme", type: "landmark" },
+            { lat: 46.0010, lng: 6.9730, name: "Le Tour", type: "town" },
+        ];
+
+        const countryLabels = [
+            { lat: 45.73, lng: 6.62, name: "FRANCE" },
+            { lat: 45.83, lng: 7.10, name: "ITALY" },
+            { lat: 46.05, lng: 7.12, name: "SWITZERLAND" },
+        ];
+
+        // Tile layers matching tmbmap.com style options
+        const tileLayers = {
+            outdoor: L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
+                attribution: '&copy; OSM France',
+                maxZoom: 19
+            }),
+            terrain: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+                attribution: '&copy; Esri &mdash; Sources: Esri, HERE, Garmin, USGS, NGA',
+                maxZoom: 18
+            }),
+            topo: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenTopoMap &copy; OSM',
+                maxZoom: 17
+            }),
+            satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                attribution: '&copy; Esri &mdash; Sources: Esri, Maxar, Earthstar',
+                maxZoom: 18
+            })
+        };
+
+        // Initialize map with outdoor view (like tmbmap.com default)
+        const map = L.map('map', {
+            zoomControl: false,
+            scrollWheelZoom: true,
+            layers: [tileLayers.outdoor]
+        }).setView([45.85, 6.88], 11);
+
+        L.control.zoom({ position: 'topright' }).addTo(map);
+
+        // Map style switcher
+        let currentLayer = 'outdoor';
+        document.querySelectorAll('.map-style-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const style = btn.dataset.style;
+                if (style === currentLayer) return;
+                map.removeLayer(tileLayers[currentLayer]);
+                map.addLayer(tileLayers[style]);
+                currentLayer = style;
+                document.querySelectorAll('.map-style-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+
+        // Draw the official TMB route in red (like tmbmap.com)
+        const routeLine = L.polyline(tmbFullRoute, {
+            color: '#d9534f', weight: 4, opacity: 0.9, smoothFactor: 1
+        }).addTo(map);
+
+        // Draw transfer segments in orange dashed
+        transferSegments.forEach(seg => {
+            L.polyline(seg.coords, {
+                color: '#f0ad4e', weight: 3, opacity: 0.8,
+                dashArray: '8, 8', smoothFactor: 1.5
+            }).addTo(map);
+        });
+
+        // Fit bounds to the full TMB route
+        map.fitBounds(routeLine.getBounds().pad(0.08));
+
+        // Add country labels
+        countryLabels.forEach(c => {
+            L.marker([c.lat, c.lng], {
+                icon: L.divIcon({
+                    className: 'place-label',
+                    html: `<div class="place-label-text country">${c.name}</div>`,
+                    iconSize: [120, 20],
+                    iconAnchor: [60, 10]
+                }),
+                interactive: false
+            }).addTo(map);
+        });
+
+        // Add place name labels
+        placeLabels.forEach(p => {
+            const cls = (p.type === 'landmark' || p.type === 'peak') ? 'landmark' : '';
+            const prefix = p.type === 'peak' ? '&#9650; ' : '';
+            L.marker([p.lat, p.lng], {
+                icon: L.divIcon({
+                    className: 'place-label',
+                    html: `<div class="place-label-text ${cls}">${prefix}${p.name}</div>`,
+                    iconSize: [140, 16],
+                    iconAnchor: [-8, 8]
+                }),
+                interactive: false,
+                zIndexOffset: -100
+            }).addTo(map);
+        });
+
+        // Add day markers â green circles like tmbmap.com
+        const markers = [];
+        days.forEach((d, i) => {
+            const icon = L.divIcon({
+                className: 'day-marker',
+                html: `<div class="day-marker-inner" data-day="${d.day}">${d.day}</div>`,
+                iconSize: [34, 34],
+                iconAnchor: [17, 17]
+            });
+
+            const marker = L.marker([d.lat, d.lng], { icon, zIndexOffset: 100 })
+                .addTo(map)
+                .bindPopup(`
+                    <div class="popup-content">
+                        <div class="popup-day">Day ${d.day} &middot; ${d.date}</div>
+                        <div class="popup-title">${d.title}</div>
+                        <div class="popup-detail">${d.distance} &middot; ${d.duration}</div>
+                        <div class="popup-detail">${d.elevation}</div>
+                        <div class="popup-detail" style="margin-top:4px; color: rgba(255,255,255,0.35);">Overnight: ${d.overnight}</div>
+                    </div>
+                `, { className: 'custom-popup', closeButton: false });
+
+            markers.push(marker);
+        });
+
+        // Build itinerary cards
+        const grid = document.getElementById('itinerary');
+        days.forEach((d, i) => {
+            const typeClass = d.type === 'hike' ? 'type-hike' : d.type === 'transfer' ? 'type-transfer' : 'type-rest';
+            const card = document.createElement('div');
+            card.className = 'day-card';
+            card.dataset.index = i;
+            card.innerHTML = `
+                <div class="day-number">
+                    <div class="day-num">${d.day}</div>
+                    <div class="day-label">Day</div>
+                </div>
+                <div class="day-info">
+                    <div class="day-date">${d.date}</div>
+                    <h3>${d.title}</h3>
+                    <div class="day-description">${d.desc}</div>
+                </div>
+                <div class="day-meta">
+                    <div class="meta-badge">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+                        ${d.distance}
+                    </div>
+                    <div class="meta-badge">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        ${d.duration}
+                    </div>
+                    <div class="meta-badge">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7.5L7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5"/></svg>
+                        ${d.elevation}
+                    </div>
+                    <div class="meta-badge" style="color: rgba(255,255,255,0.35);">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 21v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21m0 0h4.5V3.545M12.75 21h7.5V10.75M2.25 21h1.5m18 0h-18M2.25 9l4.5-1.636M18.75 3l-1.5.545m0 6.205l3 1m1.5.5l-1.5-.5M6.75 7.364V3h-3v18m3-13.636l10.5-3.819"/></svg>
+                        ${d.overnight}
+                    </div>
+                    <div class="meta-badge" style="color: rgba(255,255,255,0.3);">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8.25v-1.5m0 1.5c-1.355 0-2.697.056-4.024.166C6.845 8.51 6 9.473 6 10.608v2.513m6-4.871c1.355 0 2.697.056 4.024.166C17.155 8.51 18 9.473 18 10.608v2.513M15 8.25v-1.5m-6 1.5v-1.5m12 9.75l-1.5.75a3.354 3.354 0 01-3 0 3.354 3.354 0 00-3 0 3.354 3.354 0 01-3 0 3.354 3.354 0 00-3 0 3.354 3.354 0 01-3 0L3 16.5m15-3.379a48.474 48.474 0 00-6-.371c-2.032 0-4.034.126-6 .371m12 0c.39.049.777.102 1.163.16 1.07.16 1.837 1.094 1.837 2.175v5.169c0 .621-.504 1.125-1.125 1.125H4.125A1.125 1.125 0 013 20.625v-5.17c0-1.08.768-2.014 1.837-2.174A47.78 47.78 0 016 13.12M12.265 3.11a.375.375 0 11-.53 0L12 2.845l.265.265z"/></svg>
+                        ${d.meals}
+                    </div>
+                </div>
+            `;
+            card.addEventListener('click', () => selectDay(i));
+            grid.appendChild(card);
+        });
+
+        function selectDay(index) {
+            document.querySelectorAll('.day-card').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.day-marker-inner').forEach(m => m.classList.remove('active'));
+
+            const card = document.querySelector(`.day-card[data-index="${index}"]`);
+            card.classList.add('active');
+
+            const markerEl = document.querySelector(`.day-marker-inner[data-day="${index + 1}"]`);
+            if (markerEl) markerEl.classList.add('active');
+
+            const d = days[index];
+            map.flyTo([d.lat, d.lng], 13, { duration: 1 });
+            markers[index].openPopup();
+        }
+    </script>
+</body>
+</html>
