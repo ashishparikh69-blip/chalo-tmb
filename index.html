@@ -113,6 +113,35 @@
             margin-top: 0.25rem;
         }
 
+        .hero-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding: 0.85rem 2rem;
+            background: linear-gradient(135deg, #a8c070, #8aad4a);
+            color: #1a1712;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            text-decoration: none;
+            border-radius: 100px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(168, 192, 112, 0.3);
+        }
+
+        .hero-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 28px rgba(168, 192, 112, 0.45);
+            background: linear-gradient(135deg, #b8d080, #9abd5a);
+        }
+
+        .hero-cta svg {
+            width: 20px;
+            height: 20px;
+        }
+
         .scroll-indicator {
             position: absolute;
             bottom: 2rem;
@@ -585,6 +614,10 @@
                     <div class="hero-stat-label">Mont Blanc</div>
                 </div>
             </div>
+            <a href="day-tracker.html" class="hero-cta">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58m-.119-8.54a6 6 0 00-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 00-2.58 5.841m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 01-2.448-2.448 14.9 14.9 0 01.06-.312m-2.24 2.39a4.493 4.493 0 00-1.757 4.306 4.493 4.493 0 004.306-1.758M16.5 9a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"/></svg>
+                Live Day Tracker
+            </a>
         </div>
         <div class="scroll-indicator">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
