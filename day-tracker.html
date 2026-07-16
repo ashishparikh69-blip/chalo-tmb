@@ -19,6 +19,20 @@
     background: linear-gradient(135deg, #2a2318 0%, #3d3528 60%, #4a4030 100%);
     border-bottom: 1px solid rgba(255,255,255,0.08);
   }
+  .home-link {
+    display:inline-flex;
+    align-items:center;
+    gap:0.4rem;
+    color:rgba(255,255,255,0.5);
+    text-decoration:none;
+    font-size:0.8rem;
+    font-weight:600;
+    margin-bottom:1rem;
+    transition: color 0.2s;
+  }
+  .home-link:hover { color:#a8c070; }
+  .home-link svg { width:16px; height:16px; }
+
   .topbar .tag {
     display:inline-block;
     padding:0.35rem 1rem;
@@ -190,6 +204,10 @@
 <body>
 
 <div class="topbar">
+  <a href="index.html" class="home-link">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
+    Back to Trip Overview
+  </a>
   <div class="tag">GPS Tracks &middot; Recorded Route Data</div>
   <h1>Tour du Mont Blanc <span>Route Tracker</span></h1>
   <div class="sub">Interactive map of all 7 days, built from recorded GPS tracks. Select a day to zoom into its route and stats, or view the full loop.</div>
